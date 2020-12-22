@@ -1,19 +1,25 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { InjectModel, MongooseModule } from '@nestjs/mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { userdocument,User } from '../users/schemas/user.schema'
+import { UserTodoListService } from './userstodolist.service';
+import { TodoList, todolistDocument } from './schemas/todolist.schema';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name)
-    private readonly usermodel:Model<userdocument>){}
+    private readonly usermodel:Model<userdocument>,
+    @InjectModel(TodoList.name)
+    private readonly todolistmodel:Model<todolistDocument>
+    ){}
 
   async create(createUserDto: CreateUserDto):Promise<boolean> {
-    const newUser  = new this.usermodel(createUserDto);
+    let newUser  = new this.usermodel(createUserDto);
     newUser.user_id = newUser.id;
+    newUser.todolist = new this.todolistmodel();
     const query =  await newUser.save().catch(err => {throw new HttpException('user already exists',400)})
     return query?true:false;
   }
@@ -40,4 +46,14 @@ export class UsersService {
     const query = await this.usermodel.findOne({username:name,password:password});
     return query?query:null;
   }
+
+  async getTodoList(user_id:string):Promise<TodoList>{
+      const user = await this.usermodel.findOne({user_id:user_id})
+      if(user){
+        return user.todolist;
+      }
+      return null
+  }
+
+
 }
