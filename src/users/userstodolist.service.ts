@@ -10,6 +10,7 @@ import { UsersService } from './users.service';
 import { CreateMainTaskDto } from './dto/create-maintask.dto';
 import { CreateSubTaskDto } from './dto/create-subtask.dto';
 import { HttpException } from '@nestjs/common';
+import { UpdateMainTaskDto } from './dto/update-maintask.dto';
 
 @Injectable()
 export class UserTodoListService {
@@ -25,16 +26,6 @@ export class UserTodoListService {
     private readonly usersservice:UsersService
      ){}
 
-    async createTodoList(user_id:string):Promise<boolean>{
-        let user = await this.usersservice.findOne(user_id);
-        if(user){
-            user.todolist = new this.todolistmodel()
-            return true;
-        }
-        return false;
-    }
-
-
     async addMainTask(user_id:string,maintaskDto:CreateMainTaskDto):Promise<boolean>{
             console.log(user_id);
             let user = await this.usersservice.findOne(user_id);
@@ -42,47 +33,92 @@ export class UserTodoListService {
                 let newMaintask  = new this.maintaskmodel(maintaskDto);
                 console.log(newMaintask.id);
                 newMaintask.m_id = newMaintask.id;
-                const saveMaintask = await newMaintask.save().catch(err => {throw err});
                 let updatedTodoList = user.todolist;
                 updatedTodoList.maintask.push(newMaintask);
                 const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
-                return saveMaintask && updateUser?true:false;
+                return updateUser?true:false;
             }
             return false;
     }
 
+    async updateMainTask(user_id:string,m_id:string,updatedmaintaskDto:any):Promise<boolean>{
+        console.log(user_id);
+        let user = await this.usersservice.findOne(user_id);
+        if(user){
+            let updatedTodoList = user.todolist;
+            updatedTodoList.maintask.forEach((obj)=>{
+                if(obj.m_id === m_id) {
+                    obj.name  = updatedmaintaskDto.name;
+                    obj.isCompleted = updatedmaintaskDto.isCompleted;
+                    obj.subtask = updatedmaintaskDto.subtask;
+                }
+            });
+            const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
+            return updateUser?true:false;
+        }
+        return false;
+}
 
     async addSubTask(user_id:string,m_id:string,subtaskDto:CreateSubTaskDto):Promise<boolean>{
         let user = await this.usersservice.findOne(user_id);
         if(user){
             let newSubtask  = new this.subtaskmodel(subtaskDto);
             newSubtask.s_id = newSubtask.id;
-            const saveSubtask = await newSubtask.save().catch(err => {throw err});
             let updatedTodoList = user.todolist;
             updatedTodoList.maintask.forEach(item=>{if(item.m_id === m_id){item.subtask.push(newSubtask)}})
             const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
-            return saveSubtask && updateUser?true:false;
+            return updateUser?true:false;
         }
     return false;
     }
 
+    
+    async updateSubTask(user_id:string,m_id:string,s_id:string,updatedsubtaskDto:any):Promise<boolean>{
+        console.log(user_id);
+        let user = await this.usersservice.findOne(user_id);
+        if(user){
+            let updatedTodoList = user.todolist;
+            updatedTodoList.maintask.forEach((obj)=>{
+                if(obj.m_id === m_id) {
+                    obj.subtask.forEach((s)=>{
+                        if(s.s_id === s_id){
+                            s.name = updatedsubtaskDto.name;
+                            s.isCompleted = updatedsubtaskDto.isCompleted;
+                        }
+                    });
+                }
+            });
+            const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
+            return updateUser?true:false;
+        }
+        return false;
+}
+
+
     async deleteMainTask(user_id:string,m_id:string):Promise<boolean>{
-        // let user = await this.usersservice.findOne(user_id);
-        // if(user){
-        //     let newMaintask  = await this.maintaskmodel.findOne({m_id:m_id});
-        //     newMaintask.m_id = newMaintask.id;
-        //     user.todolist.maintask = user.todolist.maintask.filter(item=>item.m_id!==m_id)
-        //     return true;
-        // }
-        const query = this.maintaskmodel.remove({m_id:m_id}).exec();
-        if(query)return true;
-    return false;
+        let user = await this.usersservice.findOne(user_id);
+            if(user){
+                let updatedTodoList = user.todolist;
+                updatedTodoList.maintask = updatedTodoList.maintask.filter(item=>{return item.m_id!==m_id})
+                const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
+                return updateUser?true:false;
+            }
+            return false;
     }
 
     async deleteSubTask(user_id:string,m_id:string,s_id:string):Promise<boolean>{
-            const query = this.subtaskmodel.remove({s_id:s_id});
-            if(query)return true;
-    return false;
+        let user = await this.usersservice.findOne(user_id);
+        if(user){
+            let updatedTodoList = user.todolist;
+            updatedTodoList.maintask.forEach((obj)=>{
+                if(obj.m_id === m_id) {
+                    obj.subtask = obj.subtask.filter((s)=>{return s.s_id!==s_id});
+                }
+            });
+            const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
+            return updateUser?true:false;
+        }
+        return false;
     }
   
 

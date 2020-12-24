@@ -51,12 +51,22 @@ export class UsersController {
     return this.userstodolistService.addSubTask(user_id,m_id,createSubTaskDto);
   }
 
+  @Put('todolist/maintask/:user_id/:m_id')
+  updateMainTask(@Param('user_id') user_id:string,@Param('m_id') m_id:string,@Body() payload:any){
+    return this.userstodolistService.updateMainTask(user_id,m_id,payload);
+  }
+
+  @Put('todolist/subtask/:user_id/:m_id/:s_id')
+  updateSubTask(@Param('user_id') user_id:string,@Param('m_id') m_id:string,@Param('s_id') s_id:string,@Body() payload:any){
+    return this.userstodolistService.updateSubTask(user_id,m_id,s_id,payload);
+  }
+
   @Delete('todolist/maintask/:user_id/:m_id')
   deleteMainTask(@Param('user_id') user_id:string,@Param('m_id') m_id:string){
     return this.userstodolistService.deleteMainTask(user_id,m_id);
   }
 
-  @Delete('todolist/maintask/:user_id/:m_id/:s_id')
+  @Delete('todolist/subtask/:user_id/:m_id/:s_id')
   deleteSubTask(@Param('user_id') user_id:string,@Param('m_id') m_id:string,@Param('s_id') s_id:string){
     return this.userstodolistService.deleteSubTask(user_id,m_id,s_id);
   }
