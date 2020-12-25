@@ -9,5 +9,8 @@ export class CreateSubTaskDto{
     private readonly name:string
 
     @ApiProperty()
+    private taskPosition:number
+
+    @ApiProperty()
     private readonly isCompleted:boolean
 }

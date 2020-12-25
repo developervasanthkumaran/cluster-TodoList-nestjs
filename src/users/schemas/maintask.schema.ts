@@ -17,6 +17,9 @@ export class MainTask extends Document{
     isCompleted:boolean
 
     @Prop()
+    taskPosition:number
+    
+    @Prop()
     subtask:SubTask[]
 }
 

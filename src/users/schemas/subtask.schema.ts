@@ -12,6 +12,9 @@ export class SubTask extends Document{
     @Prop({required:true})
     name:string
 
+    @Prop()
+    taskPosition:number
+
     @Prop({required:true})
     isCompleted:boolean
 }

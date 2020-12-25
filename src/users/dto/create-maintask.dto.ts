@@ -10,5 +10,7 @@ export class CreateMainTaskDto{
     @ApiProperty()
     private readonly isCompleted:boolean
     @ApiProperty()
+    private taskPosition:number
+    @ApiProperty()
     private readonly subtask:SubTask[]
 }

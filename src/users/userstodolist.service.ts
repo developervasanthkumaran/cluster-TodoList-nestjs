@@ -4,13 +4,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { MainTask, maintaskDocument, maintaskschema } from './schemas/maintask.schema';
 import { SubTask, subtaskDocument } from './schemas/subtask.schema';
 import { TodoList, todolistDocument } from './schemas/todolist.schema';
-import { CreateTodoListDto } from './dto/create-todolist.dto';
 import { User, userdocument } from './schemas/user.schema';
 import { UsersService } from './users.service';
 import { CreateMainTaskDto } from './dto/create-maintask.dto';
 import { CreateSubTaskDto } from './dto/create-subtask.dto';
-import { HttpException } from '@nestjs/common';
-import { UpdateMainTaskDto } from './dto/update-maintask.dto';
 
 @Injectable()
 export class UserTodoListService {
@@ -33,6 +30,7 @@ export class UserTodoListService {
                 let newMaintask  = new this.maintaskmodel(maintaskDto);
                 console.log(newMaintask.id);
                 newMaintask.m_id = newMaintask.id;
+                newMaintask.taskPosition  = user.todolist.maintask.length + 1
                 let updatedTodoList = user.todolist;
                 updatedTodoList.maintask.push(newMaintask);
                 const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
@@ -53,6 +51,19 @@ export class UserTodoListService {
                     obj.subtask = updatedmaintaskDto.subtask;
                 }
             });
+            if(updatedmaintaskDto.isCompleted){
+                updatedTodoList.maintask.sort((a,b)=>{
+                    let i1 =a.isCompleted?1:0;
+                    let i2=b.isCompleted?1:0; 
+                    return i1-i2;
+                });
+            }
+            else{
+                updatedTodoList.maintask.sort((a,b)=>{
+                    return  a.taskPosition-b.taskPosition;
+                });
+            }
+        
             const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
             return updateUser?true:false;
         }
@@ -65,7 +76,10 @@ export class UserTodoListService {
             let newSubtask  = new this.subtaskmodel(subtaskDto);
             newSubtask.s_id = newSubtask.id;
             let updatedTodoList = user.todolist;
-            updatedTodoList.maintask.forEach(item=>{if(item.m_id === m_id){item.subtask.push(newSubtask)}})
+            updatedTodoList.maintask.forEach(item=>{if(item.m_id === m_id){
+                newSubtask.taskPosition = item.subtask.length + 1
+                item.subtask.push(newSubtask)
+            }})
             const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
             return updateUser?true:false;
         }
@@ -86,6 +100,19 @@ export class UserTodoListService {
                             s.isCompleted = updatedsubtaskDto.isCompleted;
                         }
                     });
+                    if(updatedsubtaskDto.isCompleted){
+                        obj.subtask.sort((a,b)=>{
+                            let i1 =a.isCompleted?1:0;
+                            let i2=b.isCompleted?1:0; 
+                            return i1-i2;
+                        });
+                    }
+                    else{
+                        obj.subtask.sort((a,b)=>{
+                            return a.taskPosition-b.taskPosition;
+                        });
+                    }
+                    
                 }
             });
             const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
@@ -100,6 +127,10 @@ export class UserTodoListService {
             if(user){
                 let updatedTodoList = user.todolist;
                 updatedTodoList.maintask = updatedTodoList.maintask.filter(item=>{return item.m_id!==m_id})
+
+                if(updatedTodoList.maintask.length > 0)
+                updatedTodoList.maintask.map(item=>item.taskPosition = item.taskPosition - 1)
+
                 const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
                 return updateUser?true:false;
             }
@@ -113,6 +144,9 @@ export class UserTodoListService {
             updatedTodoList.maintask.forEach((obj)=>{
                 if(obj.m_id === m_id) {
                     obj.subtask = obj.subtask.filter((s)=>{return s.s_id!==s_id});
+                    
+                    if(obj.subtask.length > 0)
+                    obj.subtask.map(item=>item.taskPosition = item.taskPosition - 1)
                 }
             });
             const updateUser =  await this.usersservice.update(user_id,{todolist:updatedTodoList});
